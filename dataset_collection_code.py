@@ -60,13 +60,20 @@ def save_to_csv(data, filename="books_dataset.csv"):
 
 # Main script
 if __name__ == "__main__":
-    search_queries = ["fiction", "science fiction", "history", "fantasy", "romance","Memoir","Narrative","Self help","Mystery","Non- Fiction","Young Adult Literature","Historical Fiction","Thriller","Graphic","Women Fiction","Horror Fiction","Biography","Historical Fantasy","Essay","Contemporary Romance","Travel","Poetry","Science","True Crime","Humour","Satire","Social Science","Adventure Fiction","New Adult Fiction","Speculative Fiction","Spirituality","Magical Realism","Fairy Tale","Philosophy","Alternate History","Drama","Detective Fiction","Action","Paranormal Romance","Science fantasy"]
+    search_queries = ["fiction", "science fiction", "history", "fantasy", "romance","Memoir","Narrative","Self help","Mystery","Non- Fiction","Young Adult Literature","Historical Fiction","Thriller","Graphic","Women Fiction","Horror Fiction","Biography","Historical Fantasy","Essay","Contemporary Romance","Travel","Poetry","Science","True Crime","Humour","Satire","Social Science","Adventure Fiction","New Adult Fiction","Speculative Fiction","Spirituality","Magical Realism","Fairy Tale","Philosophy","Alternate History"]
+    search_queries_1=["Drama","Detective Fiction","Action","Paranormal Fantasy","Science Fantasy","Technology","Education"]
     all_data = []
 
     for query in search_queries:
         print(f"Fetching data for query: {query}")
-        items = fetch_books(query, max_results=40, total_books=2000)  # Fetch up to 200 books per query
+        items = fetch_books(query, max_results=40, total_books=2000)  # Fetch up to 2000 books per query
         books = parse_books(items)
+        all_data.extend(books)
+
+    for query in search_queries_1:
+        print(f"Fetching data for query: {query}")
+        items=fetch_books(query,max_results=40,total_books=2000)
+        books=parse_books(items)
         all_data.extend(books)
 
     save_to_csv(all_data)
