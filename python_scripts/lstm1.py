@@ -9,7 +9,7 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Load dataset
-df = pd.read_csv('cleaned_books_dataset (1).csv')
+df = pd.read_csv('C:/Users/mvsla/OneDrive/Documents/GitHub/Book_llm/google_books_api_dataset/google_books_api_dataset/Google_books_api_dataset.csv')
 
 # Ensure no missing values in required columns
 df = df.dropna(subset=['Title','Authors','Language','Categories','Description'])
