@@ -1,0 +1,11 @@
+datasets
+torch
+torchvision 
+torchaudio
+transformers
+pandas
+numpy
+tf-keras
+scikit-learn
+accelerate
+evaluate
