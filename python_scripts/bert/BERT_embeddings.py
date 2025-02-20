@@ -15,7 +15,7 @@ model.eval()
 model.to("cuda")  # Move the model to GPU
 
 # Load book dataset dynamically
-df = pd.read_csv("C:/Users/mvsla/OneDrive/Documents/GitHub/Book_llm/google_books_api_dataset/google_books_api_dataset/Google_books_api_dataset.csv")
+df = pd.read_csv("C:/Users/mvsla/OneDrive/Documents/GitHub/Book_llm/google_books_api_dataset/Google_books_api_dataset.csv")
 df = df.dropna()
 
 # Generate batch embeddings
@@ -23,7 +23,10 @@ def get_batch_embeddings(texts):
     inputs = tokenizer(texts, return_tensors="pt", padding=True, truncation=True).to("cuda")
     with torch.no_grad():
         outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).cpu().numpy()  # Move back to CPU for processing
+    # Use CLS token instead of mean pooling
+    embeddings = outputs.last_hidden_state[:, 0, :].cpu().numpy()
+
+    return embeddings 
 
 # Create database connection
 print('Creating sqlite database')
@@ -48,7 +51,7 @@ CREATE TABLE IF NOT EXISTS books (
 conn.commit()
 
 # Batch insert into database
-BATCH_SIZE = 256
+BATCH_SIZE = 128
 
 for i in tqdm(range(0, df.shape[0], BATCH_SIZE), desc="Processing books in batches"):
     batch = df.iloc[i:i + BATCH_SIZE]

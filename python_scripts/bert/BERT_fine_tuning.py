@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 import evaluate
 
 # Load dataset
-df = pd.read_csv("C:/Users/mvsla/OneDrive/Documents/GitHub/Book_llm/google_books_api_dataset/google_books_api_dataset/Google_books_api_dataset.csv")
+df = pd.read_csv("C:/Users/mvsla/OneDrive/Documents/GitHub/Book_llm/google_books_api_dataset/Google_books_api_dataset.csv")
 
 # Combine all columns into a single text input
 def merge_features(row):

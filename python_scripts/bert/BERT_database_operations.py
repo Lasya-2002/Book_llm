@@ -2,63 +2,71 @@ import torch
 import faiss
 import numpy as np
 import sqlite3
-from transformers import AutoModel, AutoTokenizer
+import os
 
-# Load embeddings from the database
-def load_embeddings():
-    conn1 = sqlite3.connect("file:book_recommendations.db?mode=ro", uri=True)
-    cursor = conn1.cursor()
-    cursor.execute("SELECT title, author, description, average_rating, ratings_count, categories, book_embedding, author_embedding, title_embedding, category_embedding FROM books")
-    records = cursor.fetchall()
-    books = []
-    book_embeddings = []
-    author_embeddings = []
-    title_embeddings = []
-    category_embeddings = []
-    for record in records:
-        books.append({
-            "Name": record[0],
-            "Author": record[1],
-            "Description": record[2],
-            "AverageRating": record[3],
-            "RatingsCount": record[4],
-            "Categories": record[5]
-        })
-        book_embeddings.append(np.frombuffer(record[6], dtype=np.float32))
-        author_embeddings.append(np.frombuffer(record[7], dtype=np.float32))
-        title_embeddings.append(np.frombuffer(record[8], dtype=np.float32))
-        category_embeddings.append(np.frombuffer(record[9], dtype=np.float32))
-    conn1.close()
-    return books, np.array(book_embeddings), np.array(author_embeddings), np.array(title_embeddings), np.array(category_embeddings)
+# Function to fetch embeddings for all books in the database and create the FAISS index
+def create_faiss_index():
+    try:
+        conn = sqlite3.connect("book_recommendations.db")
+        cursor = conn.cursor()
 
-# Create and save FAISS index
-def create_and_save_faiss_index(embeddings, index_file_path):
-    d = embeddings.shape[1]
-    index = faiss.IndexFlatL2(d)  # Using L2 distance
-    index.add(embeddings)
-    faiss.write_index(index, index_file_path)
-    print(f"FAISS index saved to {index_file_path}")
+        query = """
+        SELECT title, author, description, categories, average_rating, ratings_count, 
+               title_embedding, category_embedding, book_embedding, author_embedding
+        FROM books
+        """
+        cursor.execute(query)
+        results = cursor.fetchall()
+        conn.close()
 
-# Load FAISS index from disk
-def load_faiss_index(index_file_path):
-    index = faiss.read_index(index_file_path)
-    print(f"FAISS index loaded from {index_file_path}")
-    return index
+        all_embeddings = []
+        book_details = []  # To store book details along with embeddings
+        for row in results:
+            title, author, description, categories, average_rating, ratings_count, \
+            title_embedding, category_embedding, book_embedding, author_embedding = row
+            
+            # Convert BLOB embeddings to numpy arrays
+            title_embedding = np.frombuffer(title_embedding, dtype=np.float32)
+            category_embedding = np.frombuffer(category_embedding, dtype=np.float32)
+            book_embedding = np.frombuffer(book_embedding, dtype=np.float32)
+            author_embedding = np.frombuffer(author_embedding, dtype=np.float32)
+            
+            # Combine embeddings into a single vector
+            combined_embedding = np.concatenate([title_embedding, category_embedding, book_embedding, author_embedding])
+            all_embeddings.append(combined_embedding)
+            
+            # Save the book details
+            book_details.append((title, author, description, categories, average_rating, ratings_count))
+        
+        # Convert the list of embeddings to a numpy array
+        all_embeddings = np.array(all_embeddings).astype(np.float32)
 
-# Search for similar vectors using the FAISS index
-def search_similar_vectors(index, query_vector, k=5):
-    distances, indices = index.search(query_vector, k)
-    return distances, indices
+        # Create a FAISS index
+        d = all_embeddings.shape[1]  # The dimension of the embeddings
+        index = faiss.IndexFlatL2(d)  # Using L2 distance for similarity
+        index.add(all_embeddings)  # Add the embeddings to the FAISS index
 
-if __name__ == "__main__":
-    books, book_embeddings, author_embeddings, title_embeddings, category_embeddings = load_embeddings()
-    
-    # Create and save FAISS index
-    create_and_save_faiss_index(book_embeddings, "book_faiss.index")
-    create_and_save_faiss_index(author_embeddings, "author_faiss.index")
-    create_and_save_faiss_index(title_embeddings, "title_faiss.index")
-    create_and_save_faiss_index(category_embeddings, "category_faiss.index")
-    
-    # Load FAISS index
-    book_index = load_faiss_index("book_faiss.index")
+        # Save the index to a file
+        faiss.write_index(index, 'book_recommender.index')  # Write to file
+        print("FAISS index saved to disk.")
+        return index, book_details
+    except Exception as e:
+        print(f'Exception : {e}')
+        return None, []
 
+# Function to load FAISS index from disk
+def load_faiss_index():
+    try:
+        if os.path.exists('book_recommender.index'):
+            index = faiss.read_index('book_recommender.index')  # Load the FAISS index from disk
+            print("FAISS index loaded from disk.")
+            return index
+        else:
+            print('there is an error in index loading')
+            return None
+    except Exception as e:
+        print(f"An error occurred while loading the FAISS index: {e}")
+        return None
+
+if __name__ == '__main__':
+    books_metadata=create_faiss_index()
