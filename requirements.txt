@@ -10,3 +10,4 @@ evaluate
 bitsandbytes
 streamlit
 peft
+sentencepiece
