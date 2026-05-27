@@ -467,7 +467,7 @@ You can clone the repository from github
 ## Run Backend
 
 ```bash
-python app.py
+python main.py
 ```
 
 ---
@@ -475,7 +475,7 @@ python app.py
 ## Run Streamlit Frontend
 
 ```bash
-streamlit run frontend.py
+streamlit run app.py
 ```
 
 ---
